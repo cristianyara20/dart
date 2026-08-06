@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demostración de Mutabilidad en DOM</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      padding: 30px 20px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 28px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    p.description {
+      font-size: 0.95rem;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .panel-controles {
+      background-color: #f1f5f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+    }
+    .panel-controles h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: #334155;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+    .control-group label {
+      width: 150px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #475569;
+    }
+    .control-group input[type="text"] {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .control-group input[type="text"]:focus {
+      border-color: #2563eb;
+    }
+    .control-group input[type="color"] {
+      border: none;
+      width: 40px;
+      height: 36px;
+      border-radius: 4px;
+      cursor: pointer;
+      background: transparent;
+    }
+    .control-group input[type="range"] {
+      flex: 1;
+      margin-right: 12px;
+    }
+    .val-indicator {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #2563eb;
+      width: 45px;
+    }
+    .target-section {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #fafafa;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+    }
+    .target-section h3 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    #textbox-objetivo {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #94a3b8;
+      border-radius: 6px;
+      outline: none;
+      transition: color 0.1s ease, font-size 0.1s ease;
+    }
+    .consola-wrapper h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: #334155;
+    }
+    .consola {
+      background-color: #0f172a;
+      color: #38bdf8;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.875rem;
+      border-radius: 8px;
+      line-height: 1.6;
+    }
+    .highlight-true {
+      color: #4ade80;
+      font-weight: bold;
+    }
+    .highlight-val {
+      color: #facc15;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Prueba de Mutabilidad en el DOM</h1>
+    <p class="description">Modifica los controles inferiores para alterar el elemento objetivo y verifica en tiempo real si conserva su identidad en memoria.</p>
+
+    <!-- Panel de Controles -->
+    <div class="panel-controles">
+      <h2>Controles de Modificación</h2>
+      
+      <div class="control-group">
+        <label for="input-texto">Texto / Valor:</label>
+        <input type="text" id="input-texto" value="¡Prueba interactiva!">
+      </div>
+
+      <div class="control-group">
+        <label for="input-color">Color de Fuente:</label>
+        <input type="color" id="input-color" value="#2563eb">
+      </div>
+
+      <div class="control-group">
+        <label for="input-tamano">Tamaño de Fuente:</label>
+        <input type="range" id="input-tamano" min="12" max="36" value="18">
+        <span id="label-tamano" class="val-indicator">18px</span>
+      </div>
+    </div>
+
+    <!-- Elemento Objetivo -->
+    <div class="target-section">
+      <h3>Objeto Objetivo (Control DOM)</h3>
+      <input type="text" id="textbox-objetivo" value="¡Prueba interactiva!">
+    </div>
+
+    <!-- Inspección de Referencia/Mutabilidad -->
+    <div class="consola-wrapper">
+      <h3>Inspección de Referencia en Memoria</h3>
+      <div class="consola" id="log-consola">
+        Cargando inspector...
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Obtenemos el elemento objetivo y guardamos su referencia inicial
+    const textbox = document.getElementById('textbox-objetivo');
+    const referenciaOriginal = textbox;
+
+    // 2. Aplicar estado inicial de los controles al objeto
+    textbox.style.color = '#2563eb';
+    textbox.style.fontSize = '18px';
+
+    // Controles
+    const inputTexto = document.getElementById('input-texto');
+    const inputColor = document.getElementById('input-color');
+    const inputTamano = document.getElementById('input-tamano');
+    const labelTamano = document.getElementById('label-tamano');
+    const logConsola = document.getElementById('log-consola');
+
+    function actualizarConsola() {
+      // Comparación estricta de identidad de objeto
+      const esMismoObjeto = (textbox === referenciaOriginal);
+
+      logConsola.innerHTML = `
+        ID del Objeto: <span class="highlight-val">"${textbox.id}"</span><br>
+        ¿Es la misma referencia en memoria?: <span class="${esMismoObjeto ? 'highlight-true' : ''}">${esMismoObjeto}</span><br>
+        Propiedad .value: <span class="highlight-val">"${textbox.value}"</span><br>
+        Estilo .style.color: <span class="highlight-val">"${textbox.style.color}"</span><br>
+        Estilo .style.fontSize: <span class="highlight-val">"${textbox.style.fontSize}"</span>
+      `;
+    }
+
+    // Event listeners
+    inputTexto.addEventListener('input', (e) => {
+      textbox.value = e.target.value;
+      actualizarConsola();
+    });
+
+    inputColor.addEventListener('input', (e) => {
+      textbox.style.color = e.target.value;
+      actualizarConsola();
+    });
+
+    inputTamano.addEventListener('input', (e) => {
+      const px = e.target.value + 'px';
+      textbox.style.fontSize = px;
+      labelTamano.textContent = px;
+      actualizarConsola();
+    });
+
+    // Render inicial
+    actualizarConsola();
+  </script>
+
+</body>
+</html>
